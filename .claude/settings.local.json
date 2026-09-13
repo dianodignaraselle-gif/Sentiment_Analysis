@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/bin/python --version)",
+      "Bash(./venv/bin/pip list *)",
+      "Bash(curl -s http://localhost:5000/js/main.js)"
+    ]
+  }
+}

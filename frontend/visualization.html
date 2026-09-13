@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Visualization | TikTok Sentiment Analysis</title>
+<script>
+(function () {
+  var t = localStorage.getItem("theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-auth="required">
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="TikTok logo">
+          <g stroke="#25F4EE" transform="translate(-1,0)">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+          <g stroke="#FE2C55" transform="translate(1,0)">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+          <g stroke="#fff">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="title">TikTok Sentiment Analysis</div>
+        <div class="subtitle">BERT Model</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="analysis.html">Analysis</a>
+      <a href="visualization.html" class="active">Visualization</a>
+      <a href="dataset.html">Dataset</a>
+      <a href="about.html">About</a>
+    </div>
+    <div class="nav-cta">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" id="login-btn">Login</button>
+      <div class="profile-menu" id="profile-menu" hidden>
+        <button class="profile-trigger" id="profile-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-dropdown">
+          <span class="profile-avatar" id="profile-avatar" aria-hidden="true"></span>
+          <span class="profile-name" id="profile-name"></span>
+          <svg class="profile-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profile-dropdown" role="menu" aria-labelledby="profile-trigger" hidden>
+          <button class="dropdown-item" id="logout-trigger" type="button" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            Log Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1>Visualization</h1>
+        <p>Visual insights from sentiment analysis results</p>
+      </div>
+    </div>
+
+    <div class="viz-grid">
+      <div class="card">
+        <h2>Sentiment Distribution</h2>
+        <p class="card-sub">Share of comments by sentiment</p>
+        <div class="donut-row">
+          <div id="dist-donut" class="donut-wrap" style="width:130px;height:130px;margin:0;"></div>
+          <div class="legend" id="dist-legend"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sentiment Over Time</h2>
+        <p class="card-sub">Daily sentiment share (%)</p>
+        <div id="time-chart"></div>
+      </div>
+
+      <div class="card">
+        <h2>Sentiment by Product</h2>
+        <p class="card-sub">Comment counts per product</p>
+        <div id="product-chart"></div>
+      </div>
+
+      <div class="card">
+        <h2>Word Cloud</h2>
+        <p class="card-sub">Most frequent words in comments</p>
+        <div class="wordcloud" id="word-cloud"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script>
+  const COLORS = { positive: "#22c55e", neutral: "#eab308", negative: "#ef4444" };
+
+  async function init() {
+    try {
+      const stats = await Api.stats();
+      const { distribution, over_time, by_product, word_cloud } = stats;
+
+      renderDonut(document.getElementById("dist-donut"), [
+        { value: distribution.positive.count, color: COLORS.positive },
+        { value: distribution.neutral.count, color: COLORS.neutral },
+        { value: distribution.negative.count, color: COLORS.negative },
+      ], { size: 130, stroke: 18 });
+
+      document.getElementById("dist-legend").innerHTML = `
+        <div class="legend-item">${sentimentEmoji("positive")} Positive<span class="val">${distribution.positive.pct}%</span></div>
+        <div class="legend-item">${sentimentEmoji("neutral")} Neutral<span class="val">${distribution.neutral.pct}%</span></div>
+        <div class="legend-item">${sentimentEmoji("negative")} Negative<span class="val">${distribution.negative.pct}%</span></div>
+        ${distribution.total === 0 ? '<p class="card-sub" style="margin:8px 0 0;">No comments analyzed yet - run an analysis to see your data here.</p>' : ""}
+      `;
+
+      if (over_time.length) {
+        renderLineChart(document.getElementById("time-chart"), {
+          labels: over_time.map((d) => d.date.slice(5)),
+          series: [
+            { name: "Positive", color: COLORS.positive, values: over_time.map((d) => d.positive) },
+            { name: "Neutral", color: COLORS.neutral, values: over_time.map((d) => d.neutral) },
+            { name: "Negative", color: COLORS.negative, values: over_time.map((d) => d.negative) },
+          ],
+        });
+      } else {
+        document.getElementById("time-chart").innerHTML = '<div class="empty-state">Not enough data yet.</div>';
+      }
+
+      if (by_product.length) {
+        renderBarChart(document.getElementById("product-chart"), {
+          labels: by_product.map((p) => p.product),
+          series: [
+            { name: "Positive", color: COLORS.positive, values: by_product.map((p) => p.positive) },
+            { name: "Neutral", color: COLORS.neutral, values: by_product.map((p) => p.neutral) },
+            { name: "Negative", color: COLORS.negative, values: by_product.map((p) => p.negative) },
+          ],
+        });
+      } else {
+        document.getElementById("product-chart").innerHTML = '<div class="empty-state">Not enough data yet.</div>';
+      }
+
+      renderWordCloud(document.getElementById("word-cloud"), word_cloud);
+    } catch (err) {
+      showToast("Could not load visualization data.", true);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Results | TikTok Sentiment Analysis</title>
+<script>
+(function () {
+  var t = localStorage.getItem("theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-auth="required">
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="TikTok logo">
+          <g stroke="#25F4EE" transform="translate(-1,0)">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+          <g stroke="#FE2C55" transform="translate(1,0)">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+          <g stroke="#fff">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="title">TikTok Sentiment Analysis</div>
+        <div class="subtitle">BERT Model</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="analysis.html" class="active">Analysis</a>
+      <a href="visualization.html">Visualization</a>
+      <a href="dataset.html">Dataset</a>
+      <a href="about.html">About</a>
+    </div>
+    <div class="nav-cta">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" id="login-btn">Login</button>
+      <div class="profile-menu" id="profile-menu" hidden>
+        <button class="profile-trigger" id="profile-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-dropdown">
+          <span class="profile-avatar" id="profile-avatar" aria-hidden="true"></span>
+          <span class="profile-name" id="profile-name"></span>
+          <svg class="profile-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profile-dropdown" role="menu" aria-labelledby="profile-trigger" hidden>
+          <button class="dropdown-item" id="logout-trigger" type="button" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            Log Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1>Analysis Results</h1>
+        <p id="results-sub">Summary of sentiment analysis using BERT Model</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline btn-sm" id="download-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download Report
+        </button>
+        <a href="analysis.html" class="btn btn-primary btn-sm">New Analysis</a>
+      </div>
+    </div>
+
+    <div class="results-grid">
+      <div class="card">
+        <h2>Overall Sentiment</h2>
+        <div class="donut-wrap">
+          <div id="overall-donut"></div>
+          <div class="donut-center">
+            <div class="pct" id="overall-pct">-</div>
+            <div class="lbl" id="overall-lbl">Positive</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card positive">
+          <div class="emoji">😊</div>
+          <div class="pct" id="pos-pct">-</div>
+          <div class="count" id="pos-count">-</div>
+        </div>
+        <div class="stat-card neutral">
+          <div class="emoji">😐</div>
+          <div class="pct" id="neu-pct">-</div>
+          <div class="count" id="neu-count">-</div>
+        </div>
+        <div class="stat-card negative">
+          <div class="emoji">😞</div>
+          <div class="pct" id="neg-pct">-</div>
+          <div class="count" id="neg-count">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-samples-grid">
+      <div class="card">
+        <h2>Details</h2>
+        <p class="card-sub">Breakdown by sentiment</p>
+        <table class="simple-table">
+          <thead>
+            <tr><th>Sentiment</th><th>Count</th><th>Percentage</th></tr>
+          </thead>
+          <tbody id="details-body"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Sample Comments</h2>
+        <div class="tabs">
+          <button class="tab-btn active" data-sentiment="positive">Positive</button>
+          <button class="tab-btn" data-sentiment="neutral">Neutral</button>
+          <button class="tab-btn" data-sentiment="negative">Negative</button>
+        </div>
+        <div class="sample-comments-list" id="sample-list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script>
+  const COLORS = { positive: "#22c55e", neutral: "#eab308", negative: "#ef4444" };
+  let currentResults = [];
+
+  function renderSummary(summary) {
+    const { positive, neutral, negative, total } = summary;
+
+    renderDonut(document.getElementById("overall-donut"), [
+      { value: positive.count, color: COLORS.positive },
+      { value: neutral.count, color: COLORS.neutral },
+      { value: negative.count, color: COLORS.negative },
+    ]);
+
+    const top = [
+      ["Positive", positive],
+      ["Neutral", neutral],
+      ["Negative", negative],
+    ].sort((a, b) => b[1].pct - a[1].pct)[0];
+    document.getElementById("overall-pct").textContent = `${top[1].pct}%`;
+    document.getElementById("overall-lbl").textContent = top[0];
+
+    document.getElementById("pos-pct").textContent = `${positive.pct}%`;
+    document.getElementById("pos-count").textContent = `${positive.count.toLocaleString()}`;
+    document.getElementById("neu-pct").textContent = `${neutral.pct}%`;
+    document.getElementById("neu-count").textContent = `${neutral.count.toLocaleString()}`;
+    document.getElementById("neg-pct").textContent = `${negative.pct}%`;
+    document.getElementById("neg-count").textContent = `${negative.count.toLocaleString()}`;
+
+    document.getElementById("details-body").innerHTML = `
+      <tr><td><span class="badge positive">Positive</span></td><td>${positive.count.toLocaleString()}</td><td>${positive.pct}%</td></tr>
+      <tr><td><span class="badge neutral">Neutral</span></td><td>${neutral.count.toLocaleString()}</td><td>${neutral.pct}%</td></tr>
+      <tr><td><span class="badge negative">Negative</span></td><td>${negative.count.toLocaleString()}</td><td>${negative.pct}%</td></tr>
+      <tr><td>Total</td><td>${total.toLocaleString()}</td><td>100%</td></tr>
+    `;
+  }
+
+  function renderSamples(sentiment) {
+    const list = document.getElementById("sample-list");
+    const filtered = currentResults.filter((r) => r.sentiment === sentiment).slice(0, 6);
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty-state">No comments in this category.</div>';
+      return;
+    }
+    list.innerHTML = filtered
+      .map(
+        (r) => `<div class="sample-comment"><span>${sentimentEmoji(r.sentiment)}</span><span>${escapeHtml(r.comment)}</span></div>`
+      )
+      .join("");
+  }
+
+  document.querySelectorAll("#sample-list").forEach(() => {});
+  document.querySelectorAll('.tabs .tab-btn[data-sentiment]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll('.tabs .tab-btn[data-sentiment]').forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderSamples(btn.dataset.sentiment);
+    });
+  });
+
+  document.getElementById("download-btn").addEventListener("click", () => {
+    const rows = ["Sentiment,Comment"].concat(
+      currentResults.map((r) => `${r.sentiment},"${(r.comment || "").replace(/"/g, '""')}"`)
+    );
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sentiment_report.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  async function init() {
+    const stored = sessionStorage.getItem("lastAnalysis");
+    if (stored) {
+      const data = JSON.parse(stored);
+      currentResults = data.results || [];
+      renderSummary(data.summary);
+      renderSamples("positive");
+      const productNote = data.summary.product ? ` for "${escapeHtml(data.summary.product)}"` : "";
+      document.getElementById("results-sub").textContent = `Summary of sentiment analysis using BERT Model${productNote} · ${data.summary.total} comments analyzed`;
+      return;
+    }
+
+    // Fallback: no in-session analysis yet, show aggregate stats from the stored dataset.
+    try {
+      const stats = await Api.stats();
+      const d = stats.distribution;
+      currentResults = [];
+      renderSummary({
+        positive: d.positive,
+        neutral: d.neutral,
+        negative: d.negative,
+        total: d.total,
+      });
+      document.getElementById("sample-list").innerHTML = '<div class="empty-state">Run a new analysis to see sample comments here.</div>';
+      document.getElementById("results-sub").textContent = "Showing aggregate stats from the stored dataset. Run a new analysis for fresh results.";
+    } catch (err) {
+      showToast("Could not load results.", true);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

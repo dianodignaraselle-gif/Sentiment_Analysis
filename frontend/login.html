@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login | TikTok Sentiment Analysis</title>
+<script>
+(function () {
+  var t = localStorage.getItem("theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="TikTok logo">
+          <g stroke="#25F4EE" transform="translate(-1,0)">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+          <g stroke="#FE2C55" transform="translate(1,0)">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+          <g stroke="#fff">
+            <path d="M16 3v10.5a4 4 0 1 1-3-3.87V3h3Z" />
+            <path d="M16 3c0 2.5 2 4 4 4" />
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="title">TikTok Sentiment Analysis</div>
+        <div class="subtitle">BERT Model</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="analysis.html">Analysis</a>
+      <a href="visualization.html">Visualization</a>
+      <a href="dataset.html">Dataset</a>
+      <a href="about.html">About</a>
+    </div>
+    <div class="nav-cta">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="login-page">
+  <div class="login-card" id="login-card"></div>
+</main>
+
+<iframe id="reveal-frame" class="reveal-frame" title="Dashboard preview" tabindex="-1" aria-hidden="true"></iframe>
+<div class="door-panel door-left" id="door-left" aria-hidden="true"></div>
+<div class="door-panel door-right" id="door-right" aria-hidden="true"></div>
+
+<script src="js/main.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const nextPage = params.get("next") || "index.html";
+  const card = document.getElementById("login-card");
+
+  const savedName = localStorage.getItem("displayName");
+  if (savedName) {
+    renderLoggedInCard(card, savedName, nextPage);
+  } else {
+    renderLoginCard(card, nextPage);
+  }
+</script>
+</body>
+</html>
