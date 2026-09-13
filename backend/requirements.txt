@@ -3,3 +3,4 @@ flask-cors==4.0.1
 transformers==4.46.0
 torch==2.9.0
 numpy<2
+gunicorn==21.2.0
