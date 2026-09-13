@@ -4,13 +4,12 @@
 // Server / preview tab, or the file straight off disk - "/api" would
 // resolve against that origin instead, so fall back to an absolute URL
 // pointing at the Flask server (CORS is enabled on the backend for this).
-const BACKEND_PORT = 5000;
 const API_BASE = (() => {
-  const { protocol, hostname, port } = window.location;
-  if (protocol === "http:" && (port === "" || port === String(BACKEND_PORT))) {
-    return "/api";
+  const { hostname } = window.location;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:5000/api";
   }
-  return `http://${hostname || "localhost"}:${BACKEND_PORT}/api`;
+  return "/api";
 })();
 
 async function apiRequest(path, options = {}) {
