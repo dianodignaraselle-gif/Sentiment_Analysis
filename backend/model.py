@@ -29,9 +29,16 @@ _STAR_TO_LABEL = {
 
 @lru_cache(maxsize=1)
 def _get_pipeline():
-    from transformers import pipeline
+    from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
+    import torch
 
-    return pipeline("sentiment-analysis", model=MODEL_NAME, tokenizer=MODEL_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+    model = torch.quantization.quantize_dynamic(
+        model, {torch.nn.Linear}, dtype=torch.qint8
+    )
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
 
 
 def classify(texts):
