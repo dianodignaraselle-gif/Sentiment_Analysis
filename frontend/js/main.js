@@ -403,3 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initThemeToggle();
   initHeroParallax();
 });
+
+document.getElementById('hamburger-btn').addEventListener('click', function() {
+  document.querySelector('.nav-links').classList.toggle('open');
+});
