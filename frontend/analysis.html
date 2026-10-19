@@ -91,6 +91,10 @@
             <textarea id="comments" rows="8" maxlength="5000" placeholder="Paste TikTok comments here...&#10;(Each comment on a new line)"></textarea>
             <div class="char-count"><span id="char-count">0</span> / 5000 characters</div>
           </div>
+          <div class="field">
+            <label for="product">Product (Optional)</label>
+            <input type="text" id="product" placeholder="e.g. Maybelline Fit Me Foundation" />
+          </div>
         </div>
 
         <div class="tab-panel" id="tab-link">
@@ -98,12 +102,6 @@
             <label for="tiktok-link">TikTok Video Link</label>
             <input type="url" id="tiktok-link" placeholder="https://www.tiktok.com/@user/video/..." />
           </div>
-          <div class="link-hint">Direct TikTok link scraping isn't available in this build. Use "Paste Comments" and paste the comments you'd like analyzed.</div>
-        </div>
-
-        <div class="field">
-          <label for="product">Product (Optional)</label>
-          <input type="text" id="product" placeholder="e.g. Maybelline Fit Me Foundation" />
         </div>
 
         <details class="advanced">
@@ -176,26 +174,54 @@
   const analyzeBtn = document.getElementById("analyze-btn");
   const analyzeLabel = document.getElementById("analyze-label");
 
-  analyzeBtn.addEventListener("click", async () => {
+  function activeTab() {
+    return document.querySelector(".tab-btn.active")?.dataset.tab || "paste";
+  }
+
+  async function runPasteAnalysis(product) {
     const lines = commentsEl.value
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
 
     if (!lines.length) {
-      showToast("Please paste at least one comment.", true);
-      return;
+      throw new Error("Please paste at least one comment.");
     }
 
-    const product = document.getElementById("product").value.trim();
+    analyzeLabel.textContent = "Analyzing with XLM-RoBERTa...";
+    const data = await Api.analyze(lines, product);
+    sessionStorage.setItem("lastAnalysis", JSON.stringify({ mode: "paste", ...data }));
+    window.location.href = "results.html";
+  }
 
+  async function runTikTokAnalysis() {
+    const url = document.getElementById("tiktok-link").value.trim();
+    if (!url) {
+      throw new Error("Please paste a TikTok video link.");
+    }
+    if (!/^https?:\/\/(www\.|vm\.|vt\.|m\.)?tiktok\.com\//i.test(url)) {
+      throw new Error("That doesn't look like a TikTok video link.");
+    }
+
+    analyzeLabel.textContent = "Extracting audio & transcribing...";
+    const data = await Api.analyzeTikTok(url);
+    sessionStorage.setItem(
+      "lastAnalysis",
+      JSON.stringify({ mode: "tiktok", jobId: data.job_id, video: data.video, summary: data.summary, results: data.results, comments_simulated: data.comments_simulated, comments_error: data.comments_error })
+    );
+    window.location.href = "results.html";
+  }
+
+  analyzeBtn.addEventListener("click", async () => {
     analyzeBtn.disabled = true;
-    analyzeLabel.textContent = "Analyzing with BERT...";
 
     try {
-      const data = await Api.analyze(lines, product);
-      sessionStorage.setItem("lastAnalysis", JSON.stringify(data));
-      window.location.href = "results.html";
+      if (activeTab() === "link") {
+        await runTikTokAnalysis();
+      } else {
+        const product = document.getElementById("product").value.trim();
+        await runPasteAnalysis(product);
+      }
     } catch (err) {
       showToast(err.message || "Analysis failed.", true);
       analyzeBtn.disabled = false;
