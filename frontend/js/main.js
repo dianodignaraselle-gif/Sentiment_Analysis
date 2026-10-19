@@ -317,6 +317,10 @@ function renderLoginCard(container, closeHref = "index.html") {
       <div class="login-field">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         <input type="text" id="login-password-input" class="login-password-mask" placeholder="Password" maxlength="60" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false" title="Show password">
+          <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="icon-eye-slash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="M2 2l20 20"/></svg>
+        </button>
       </div>
 
       <button class="btn btn-primary login-submit" id="login-submit-btn">Login</button>
@@ -350,6 +354,21 @@ function renderLoginCard(container, closeHref = "index.html") {
   container.querySelector("#signup-link").addEventListener("click", (e) => {
     e.preventDefault();
     showToast("No signup needed - just log in with any name and password.");
+  });
+
+  // Show/hide the password. The field is masked by the .login-password-mask
+  // class rather than type="password" (see style.css), so toggle that class.
+  const passwordInput = container.querySelector("#login-password-input");
+  const toggleBtn = container.querySelector("#password-toggle");
+  // Keep focus (and the caret) in the field when the icon is clicked.
+  toggleBtn.addEventListener("mousedown", (e) => e.preventDefault());
+  toggleBtn.addEventListener("click", () => {
+    const show = passwordInput.classList.toggle("login-password-mask") === false;
+    toggleBtn.classList.toggle("is-visible", show);
+    toggleBtn.setAttribute("aria-pressed", String(show));
+    const label = show ? "Hide password" : "Show password";
+    toggleBtn.setAttribute("aria-label", label);
+    toggleBtn.title = label;
   });
 }
 
