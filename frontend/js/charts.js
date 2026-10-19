@@ -72,7 +72,7 @@ function renderDonut(container, segments, { size = 170, stroke = 22 } = {}) {
  */
 function renderLineChart(container, { labels, series }, { width = 460, height = 220 } = {}) {
   container.innerHTML = "";
-  const padding = { top: 16, right: 12, bottom: 28, left: 32 };
+  const padding = { top: 16, right: 12, bottom: 30, left: 38 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
 
@@ -95,7 +95,7 @@ function renderLineChart(container, { labels, series }, { width = 460, height = 
       x: padding.left - 8,
       y: y + 4,
       "text-anchor": "end",
-      "font-size": 10,
+      "font-size": 12,
       fill: cssVar("--text-muted", "#93a8bf"),
     });
     text.textContent = v;
@@ -135,7 +135,7 @@ function renderLineChart(container, { labels, series }, { width = 460, height = 
       x,
       y: height - 8,
       "text-anchor": "middle",
-      "font-size": 10,
+      "font-size": 12,
       fill: cssVar("--text-muted", "#93a8bf"),
     });
     text.textContent = lab;
@@ -150,7 +150,7 @@ function renderLineChart(container, { labels, series }, { width = 460, height = 
  */
 function renderBarChart(container, { labels, series }, { width = 460, height = 220 } = {}) {
   container.innerHTML = "";
-  const padding = { top: 16, right: 12, bottom: 44, left: 32 };
+  const padding = { top: 16, right: 12, bottom: 46, left: 38 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
 
@@ -161,7 +161,7 @@ function renderBarChart(container, { labels, series }, { width = 460, height = 2
     svg.appendChild(
       svgEl("line", { x1: padding.left, x2: width - padding.right, y1: y, y2: y, stroke: cssVar("--border", "#1f3a56"), "stroke-width": 1 })
     );
-    const text = svgEl("text", { x: padding.left - 8, y: y + 4, "text-anchor": "end", "font-size": 10, fill: cssVar("--text-muted", "#93a8bf") });
+    const text = svgEl("text", { x: padding.left - 8, y: y + 4, "text-anchor": "end", "font-size": 12, fill: cssVar("--text-muted", "#93a8bf") });
     text.textContent = v;
     svg.appendChild(text);
   });
@@ -194,7 +194,7 @@ function renderBarChart(container, { labels, series }, { width = 460, height = 2
       x: groupX + groupWidth / 2,
       y: height - 26,
       "text-anchor": "middle",
-      "font-size": 9,
+      "font-size": 11,
       fill: cssVar("--text-muted", "#93a8bf"),
     });
     const words = lab.split(" ");
@@ -220,7 +220,7 @@ function renderWordCloud(container, words) {
   words.forEach((w, i) => {
     const span = document.createElement("span");
     const scale = max === min ? 0.5 : (w.count - min) / (max - min);
-    const fontSize = 13 + scale * 26;
+    const fontSize = 15 + scale * 26;
     span.textContent = w.text;
     span.style.fontSize = `${fontSize}px`;
     span.style.color = colors[i % colors.length];
