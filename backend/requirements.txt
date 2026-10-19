@@ -2,6 +2,27 @@
 flask==3.0.3
 flask-cors==4.0.1
 transformers==4.46.0
-torch==2.9.0
+torch==2.2.2
 numpy<2
 gunicorn==21.2.0
+sentencepiece==0.2.0
+protobuf<5
+
+# TikTok Link pipeline (local use - see README "TikTok Link setup"):
+# audio extraction + Whisper speech-to-text. imageio-ffmpeg bundles a static
+# ffmpeg binary so no system install (Homebrew, etc.) is required - handy
+# since Homebrew's installer no longer supports Intel Macs at all.
+yt-dlp==2025.10.14
+# Lets yt-dlp impersonate a real browser's TLS fingerprint - TikTok rejects
+# plain Python HTTP clients far more often.
+curl_cffi==0.13.0
+openai-whisper==20231117
+imageio-ffmpeg==0.6.0
+
+# Live comment scraping (TikTok has no official comments API, so this is the
+# unofficial TikTokApi package driving a Playwright browser). After installing,
+# also run `python -m playwright install chromium`, and put your tiktok.com
+# msToken cookie in backend/.env as MS_TOKEN=... (see .env.example).
+TikTokApi==7.3.3
+playwright==1.60.0
+python-dotenv==1.2.1
