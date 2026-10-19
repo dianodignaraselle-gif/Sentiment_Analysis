@@ -4,3 +4,10 @@ __pycache__/
 *.pyo
 .env
 .DS_Store
+
+# Model weights (~1.1GB) - rebuild with training/train_sentiment.py
+backend/models/*/model.safetensors
+training/cache/
+training/train.log
+# Local pre-upgrade safety copies
+backups/
