@@ -1,0 +1,16 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+streamlit==1.39.0
+streamlit-autorefresh==1.0.1
+transformers==4.46.0
+# torch==2.9.0 needs Python >=3.10; this repo's local interpreter is 3.9, so
+# pin to the last CPU build with a 3.9 wheel. Bump this if/when you move to 3.10+.
+torch==2.2.2
+sentencepiece==0.2.0
+protobuf<5
+numpy<2
+pandas==2.2.3
+plotly==5.24.1
+
+# Optional, for real (vs. mock/demo) TikTok scraping - see scraper.py:
+# TikTokApi
+# playwright
