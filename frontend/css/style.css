@@ -1,32 +1,32 @@
 :root {
   --navy: #0b1b2f;
   --navy-light: #14304d;
-  --teal: #2dd4bf;
+  --teal: #0d9488;
   --teal-dark: #0f766e;
   --teal-darker: #0b5d56;
-  --teal-tint: #123a38;
-  --deep-blue: #6f95e0;
-  --deep-blue-tint: #16233a;
+  --teal-tint: #e3faf7;
+  --deep-blue: #4f6fd6;
+  --deep-blue-tint: #eaf0ff;
   --tiktok-red: #ff3b5c;
   --tiktok-cyan: #25f4ee;
-  --green: #22c55e;
+  --green: #16a34a;
   --green-bg: #dcfce7;
-  --yellow: #eab308;
+  --yellow: #ca8a04;
   --yellow-bg: #fef9c3;
-  --red: #ef4444;
+  --red: #dc2626;
   --red-bg: #fee2e2;
-  --text: #e8eef5;
-  --text-muted: #93a8bf;
-  --border: #1f3a56;
-  --bg-page: #0a1728;
-  --card-bg: #122842;
-  --surface-2: #17304d;
-  --input-bg: #0f2138;
+  --text: #101d2c;
+  --text-muted: #5b6b80;
+  --border: #dfe6ee;
+  --bg-page: #ffffff;
+  --card-bg: #ffffff;
+  --surface-2: #f1f5f9;
+  --input-bg: #f8fafc;
   --radius-lg: 18px;
   --radius-md: 12px;
   --radius-sm: 8px;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 }
 
 :root[data-theme="dark"] {
@@ -842,7 +842,41 @@ img, svg {
 
 .page-header .actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
+}
+
+.live-status {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.live-error {
+  background: var(--red-bg);
+  color: var(--red);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.transcript-note {
+  display: inline-block;
+  background: var(--red-bg);
+  color: var(--red);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.transcript-note[hidden] {
+  display: none;
 }
 
 /* ---------------- Cards ---------------- */
@@ -946,16 +980,6 @@ img, svg {
 
 .tab-panel.active {
   display: block;
-}
-
-.link-hint {
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
-  padding: 18px;
-  font-size: 13px;
-  color: var(--text-muted);
-  text-align: center;
-  background: var(--input-bg);
 }
 
 details.advanced {
@@ -1540,7 +1564,7 @@ table.data-table tr:hover td {
   display: grid;
   grid-template-columns: 0.85fr 1fr;
   width: 100%;
-  max-width: 720px;
+  max-width: 880px;
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -1549,15 +1573,15 @@ table.data-table tr:hover td {
 
 .login-close {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  width: 30px;
-  height: 30px;
+  top: 16px;
+  left: 16px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   z-index: 2;
@@ -1576,32 +1600,32 @@ table.data-table tr:hover td {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
+  padding: 40px;
 }
 
 .login-illustration svg {
-  max-width: 230px;
+  max-width: 290px;
 }
 
 .login-form-panel {
-  padding: 36px 34px;
+  padding: 48px 46px;
 }
 
 .login-welcome {
-  margin: 0 0 2px;
-  font-size: 13px;
+  margin: 0 0 4px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 
 .login-form-panel h3 {
-  margin: 0 0 8px;
-  font-size: 19px;
+  margin: 0 0 10px;
+  font-size: 24px;
   letter-spacing: 0.01em;
 }
 
 .login-note {
-  margin: 0 0 18px;
-  font-size: 11.5px;
+  margin: 0 0 22px;
+  font-size: 13px;
   color: var(--text-muted);
   line-height: 1.4;
 }
@@ -1609,16 +1633,16 @@ table.data-table tr:hover td {
 .login-field {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: var(--teal-tint);
   border-radius: var(--radius-sm);
-  padding: 11px 14px;
-  margin-bottom: 12px;
+  padding: 15px 18px;
+  margin-bottom: 15px;
 }
 
 .login-field svg {
-  width: 16px;
-  height: 16px;
+  width: 19px;
+  height: 19px;
   color: var(--teal);
   flex-shrink: 0;
 }
@@ -1627,7 +1651,7 @@ table.data-table tr:hover td {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 13.5px;
+  font-size: 16px;
   width: 100%;
   font-family: inherit;
   color: var(--text);
@@ -1638,6 +1662,46 @@ table.data-table tr:hover td {
 .login-password-mask {
   -webkit-text-security: disc;
   text-security: disc;
+}
+
+/* Eye icon at the right end of the password field: an eye while the password
+   is hidden (click to show), an eye-slash while it's visible (click to hide). */
+.password-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  margin: -5px -5px -5px 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--teal);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+}
+
+.password-toggle .icon-eye-slash,
+.password-toggle.is-visible .icon-eye {
+  display: none;
+}
+
+.password-toggle.is-visible .icon-eye-slash {
+  display: block;
 }
 
 /* The username field uses type="search" so Safari/Chrome never attach their
@@ -1657,19 +1721,20 @@ table.data-table tr:hover td {
 .login-submit {
   display: flex;
   width: fit-content;
-  min-width: 140px;
+  min-width: 170px;
   justify-content: center;
-  margin: 6px auto 0;
+  margin: 10px auto 0;
+  padding: 14px 28px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 
 .login-signup {
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
-  margin: 18px 0 0;
+  margin: 22px 0 0;
 }
 
 .login-signup a {
@@ -1738,13 +1803,16 @@ body.door-active .reveal-frame {
 @media (max-width: 640px) {
   .login-card {
     grid-template-columns: 1fr;
-    max-width: 380px;
+    max-width: 420px;
   }
   .login-illustration {
-    padding: 22px;
+    padding: 24px;
   }
   .login-illustration svg {
-    max-width: 140px;
+    max-width: 160px;
+  }
+  .login-form-panel {
+    padding: 32px 26px;
   }
 }
 
