@@ -16,7 +16,7 @@ yt-dlp==2025.10.14
 # Lets yt-dlp impersonate a real browser's TLS fingerprint - TikTok rejects
 # plain Python HTTP clients far more often.
 curl_cffi==0.13.0
-openai-whisper==20231117
+openai-whisper==20250625
 imageio-ffmpeg==0.6.0
 
 # Live comment scraping (TikTok has no official comments API, so this is the
