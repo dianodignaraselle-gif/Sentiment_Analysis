@@ -3,7 +3,8 @@
     "allow": [
       "Bash(./venv/bin/python --version)",
       "Bash(./venv/bin/pip list *)",
-      "Bash(curl -s http://localhost:5000/js/main.js)"
+      "Bash(curl -s http://localhost:5000/js/main.js)",
+      "Bash(PYTHONPATH=. venv/bin/python /private/tmp/claude-502/-Users-djdiano1-Desktop-Sentiment-Analysis-of-Tiktok-Comment-Section-for-Evaluating-Foundation-Cosmetic-Products/f5f5edc2-aefd-4d17-8632-45f17c12ea73/scratchpad/mixed_eval.py)"
     ]
   }
 }
