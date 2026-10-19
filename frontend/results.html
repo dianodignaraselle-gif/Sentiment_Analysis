@@ -76,11 +76,29 @@
         <p id="results-sub">Summary of sentiment analysis using BERT Model</p>
       </div>
       <div class="actions">
+        <span class="live-status" id="live-status" hidden></span>
+        <button class="btn btn-outline btn-sm" id="stop-live-btn" hidden>Stop Live Polling</button>
         <button class="btn btn-outline btn-sm" id="download-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
           Download Report
         </button>
         <a href="analysis.html" class="btn btn-primary btn-sm">New Analysis</a>
+      </div>
+    </div>
+
+    <div class="live-error" id="live-error" role="alert" hidden></div>
+
+    <div class="card side-card" id="video-overview-card" hidden>
+      <h3 style="margin-bottom:12px;">Video Creator Sentiment (Whisper + XLM-RoBERTa)</h3>
+      <p class="card-sub" id="video-author"></p>
+      <span class="transcript-note" id="transcript-note" hidden></span>
+      <details class="advanced" open>
+        <summary>Transcript / Caption ▾</summary>
+        <div class="advanced-body" style="display:block;"><p id="video-text" style="white-space:pre-line;"></p></div>
+      </details>
+      <div class="label-row" id="video-sentiment-row" style="margin-top:12px;">
+        <span class="emoji" id="video-sentiment-emoji">😐</span>
+        <div><div class="name" id="video-sentiment-name">-</div><div class="desc" id="video-sentiment-desc"></div></div>
       </div>
     </div>
 
@@ -128,13 +146,13 @@
       </div>
 
       <div class="card">
-        <h2>Sample Comments</h2>
+        <h2>Comments</h2>
         <div class="tabs">
           <button class="tab-btn active" data-sentiment="positive">Positive</button>
           <button class="tab-btn" data-sentiment="neutral">Neutral</button>
           <button class="tab-btn" data-sentiment="negative">Negative</button>
         </div>
-        <div class="sample-comments-list" id="sample-list"></div>
+        <div class="comments-list" id="sample-list"></div>
       </div>
     </div>
   </div>
@@ -215,10 +233,138 @@
     URL.revokeObjectURL(url);
   });
 
+  const SENTIMENT_EMOJI = { positive: "😊", neutral: "😐", negative: "😞" };
+  let liveJobId = null;
+  let livePollTimer = null;
+  let commentsSimulated = false;
+
+  function renderVideoOverview(video) {
+    const card = document.getElementById("video-overview-card");
+    card.hidden = false;
+    document.getElementById("video-author").textContent = `@${video.author || "unknown"}`;
+    const textParts = [];
+    const transcriptReliable = video.transcript_reliable !== false;
+    if (video.caption) textParts.push(`Caption: ${video.caption}`);
+    if (video.transcript && transcriptReliable) textParts.push(`Transcript: ${video.transcript}`);
+    if (video.transcript && !transcriptReliable) {
+      textParts.push(`Transcript (not used${video.transcript_issue ? ` - ${video.transcript_issue}` : ""}): ${video.transcript}`);
+    }
+    if (!video.transcript && video.transcript_error) {
+      textParts.push(`(No transcript - ${video.transcript_error})`);
+    } else if (!video.transcript && video.transcript_issue) {
+      textParts.push(`(No transcript - ${video.transcript_issue})`);
+    }
+    document.getElementById("video-text").textContent = textParts.join("\n\n") || "No caption or transcript available.";
+
+    const note = document.getElementById("transcript-note");
+    note.hidden = !video.transcript_note;
+    note.textContent = video.transcript_note ? `⚠️ ${video.transcript_note}` : "";
+
+    const row = document.getElementById("video-sentiment-row");
+    const sentiment = video.sentiment || "neutral";
+    row.className = `label-row ${sentiment}`;
+    document.getElementById("video-sentiment-emoji").textContent = SENTIMENT_EMOJI[sentiment] || "😐";
+    document.getElementById("video-sentiment-name").textContent = video.sentiment
+      ? `${sentiment[0].toUpperCase()}${sentiment.slice(1)} (${Math.round((video.score || 0) * 100)}%)`
+      : "Not available";
+    document.getElementById("video-sentiment-desc").textContent = video.matched_terms?.length
+      ? `Local slang detected: ${video.matched_terms.join(", ")}`
+      : "";
+  }
+
+  function setLiveStatus(text) {
+    const el = document.getElementById("live-status");
+    el.hidden = false;
+    el.textContent = text;
+  }
+
+  function setLiveError(text) {
+    const el = document.getElementById("live-error");
+    el.hidden = !text;
+    el.textContent = text || "";
+  }
+
+  function stopLivePolling() {
+    if (livePollTimer) clearInterval(livePollTimer);
+    livePollTimer = null;
+    document.getElementById("stop-live-btn").hidden = true;
+  }
+
+  async function pollOnce() {
+    try {
+      const data = await Api.pollTikTok(liveJobId);
+      currentResults = data.results || [];
+      renderSummary(data.summary);
+      renderSamples(document.querySelector('.tabs .tab-btn[data-sentiment].active')?.dataset.sentiment || "positive");
+      const simNote = commentsSimulated ? " (simulated demo comments)" : "";
+      document.getElementById("results-sub").textContent = `Live TikTok comment feed${simNote} · ${data.summary.total} comments analyzed so far`;
+
+      const simSuffix = commentsSimulated ? " · ⚠️ simulated comments, not scraped from the real video" : "";
+      if (data.comments_error) {
+        setLiveError(`Could not fetch TikTok comments: ${data.comments_error}`);
+        setLiveStatus("🔴 Comment fetching unavailable");
+        stopLivePolling();
+      } else if (!data.is_running) {
+        setLiveError("");
+        setLiveStatus("⚪ Live polling stopped.");
+        stopLivePolling();
+      } else if (data.last_error) {
+        setLiveError(`Fetching TikTok comments failed (will keep retrying): ${data.last_error}`);
+        setLiveStatus(`🟡 Live, last poll had an issue${simSuffix}`);
+      } else {
+        setLiveError("");
+        setLiveStatus(`🟢 Live - polling for new comments every few seconds${simSuffix}`);
+      }
+    } catch (err) {
+      setLiveStatus(`🔴 Lost connection to live feed: ${err.message || err}`);
+      if (/unknown or expired session/i.test(err.message || "")) stopLivePolling();
+    }
+  }
+
+  function startLivePolling(jobId) {
+    liveJobId = jobId;
+    const stopBtn = document.getElementById("stop-live-btn");
+    stopBtn.hidden = false;
+    stopBtn.onclick = async () => {
+      stopLivePolling();
+      setLiveStatus("⚪ Live polling stopped.");
+      try {
+        await Api.stopTikTok(jobId);
+      } catch (_) {}
+    };
+
+    setLiveStatus("🟢 Live - polling for new comments every few seconds");
+    livePollTimer = setInterval(pollOnce, 4000);
+    pollOnce();
+    // No stop-on-unload: refreshing or visiting another page and coming back
+    // should resume the same live feed. Abandoned jobs are cleaned up by the
+    // server after 30 minutes without polling; "Stop Live Polling" stops now.
+  }
+
   async function init() {
     const stored = sessionStorage.getItem("lastAnalysis");
     if (stored) {
       const data = JSON.parse(stored);
+
+      if (data.mode === "tiktok") {
+        currentResults = data.results || [];
+        commentsSimulated = !!data.comments_simulated;
+        renderVideoOverview(data.video || {});
+        renderSummary(data.summary);
+        renderSamples("positive");
+        document.getElementById("results-sub").textContent = commentsSimulated
+          ? "Waiting for live comments... (simulated demo comments)"
+          : "Waiting for live comments...";
+        if (data.comments_error) {
+          setLiveError(`Could not fetch TikTok comments: ${data.comments_error}`);
+          setLiveStatus("🔴 Comment fetching unavailable");
+          document.getElementById("results-sub").textContent = "No comments fetched - see the error above.";
+          return;
+        }
+        if (data.jobId) startLivePolling(data.jobId);
+        return;
+      }
+
       currentResults = data.results || [];
       renderSummary(data.summary);
       renderSamples("positive");
@@ -238,7 +384,7 @@
         negative: d.negative,
         total: d.total,
       });
-      document.getElementById("sample-list").innerHTML = '<div class="empty-state">Run a new analysis to see sample comments here.</div>';
+      document.getElementById("sample-list").innerHTML = '<div class="empty-state">Run a new analysis to see comments here.</div>';
       document.getElementById("results-sub").textContent = "Showing aggregate stats from the stored dataset. Run a new analysis for fresh results.";
     } catch (err) {
       showToast("Could not load results.", true);
