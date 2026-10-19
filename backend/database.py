@@ -1,5 +1,7 @@
+import json
 import re
 import sqlite3
+import time
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -49,6 +51,24 @@ def init_db():
         )
         """
     )
+    # TikTok live-analysis sessions, so a job survives a server restart or a
+    # page refresh - its background poller is rebuilt from this on demand.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS tiktok_jobs (
+            job_id TEXT PRIMARY KEY,
+            video_url TEXT NOT NULL,
+            product TEXT,
+            owner TEXT,
+            comments_json TEXT NOT NULL DEFAULT '[]',
+            comments_simulated INTEGER NOT NULL DEFAULT 0,
+            comments_error TEXT,
+            stopped INTEGER NOT NULL DEFAULT 0,
+            created_at REAL NOT NULL,
+            updated_at REAL NOT NULL
+        )
+        """
+    )
     conn.commit()
     # Owners used to be stored with whatever casing/whitespace the user typed
     # at login; the frontend now normalizes to trimmed lowercase before
@@ -63,6 +83,51 @@ def init_db():
     conn.close()
     if count == 0:
         _seed()
+
+
+def save_tiktok_job(job_id, video_url, product, owner, comments_simulated, comments_error):
+    now = time.time()
+    conn = get_conn()
+    conn.execute(
+        """
+        INSERT OR REPLACE INTO tiktok_jobs
+            (job_id, video_url, product, owner, comments_json, comments_simulated, comments_error, stopped, created_at, updated_at)
+        VALUES (?, ?, ?, ?, '[]', ?, ?, 0, ?, ?)
+        """,
+        (job_id, video_url, product, owner, int(bool(comments_simulated)), comments_error, now, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_tiktok_job(job_id):
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM tiktok_jobs WHERE job_id = ?", (job_id,)).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    job = dict(row)
+    job["comments"] = json.loads(job.pop("comments_json") or "[]")
+    job["comments_simulated"] = bool(job["comments_simulated"])
+    job["stopped"] = bool(job["stopped"])
+    return job
+
+
+def update_tiktok_job_comments(job_id, comments):
+    conn = get_conn()
+    conn.execute(
+        "UPDATE tiktok_jobs SET comments_json = ?, updated_at = ? WHERE job_id = ?",
+        (json.dumps(comments), time.time(), job_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def mark_tiktok_job_stopped(job_id):
+    conn = get_conn()
+    conn.execute("UPDATE tiktok_jobs SET stopped = 1, updated_at = ? WHERE job_id = ?", (time.time(), job_id))
+    conn.commit()
+    conn.close()
 
 
 def insert_comments(rows):
