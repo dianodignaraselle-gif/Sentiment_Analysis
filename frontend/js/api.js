@@ -53,6 +53,18 @@ const Api = {
       body: JSON.stringify({ comments, product, username: currentOwner() }),
     });
   },
+  analyzeTikTok(url, product) {
+    return apiRequest("/tiktok/analyze", {
+      method: "POST",
+      body: JSON.stringify({ url, product, username: currentOwner() }),
+    });
+  },
+  pollTikTok(jobId) {
+    return apiRequest(`/tiktok/updates/${encodeURIComponent(jobId)}`);
+  },
+  stopTikTok(jobId) {
+    return apiRequest(`/tiktok/stop/${encodeURIComponent(jobId)}`, { method: "POST" });
+  },
   dataset({ page = 1, pageSize = 10, search = "", product = "" } = {}) {
     const params = new URLSearchParams({
       page,
