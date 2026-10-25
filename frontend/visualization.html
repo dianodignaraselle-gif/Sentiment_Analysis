@@ -87,7 +87,7 @@
         <h2>Sentiment Distribution</h2>
         <p class="card-sub">Share of comments by sentiment</p>
         <div class="donut-row">
-          <div id="dist-donut" class="donut-wrap" style="width:130px;height:130px;margin:0;"></div>
+          <div id="dist-donut" class="donut-wrap donut-lg"></div>
           <div class="legend" id="dist-legend"></div>
         </div>
       </div>
@@ -125,10 +125,10 @@
       const { distribution, over_time, by_product, word_cloud } = stats;
 
       renderDonut(document.getElementById("dist-donut"), [
-        { value: distribution.positive.count, color: COLORS.positive },
-        { value: distribution.neutral.count, color: COLORS.neutral },
-        { value: distribution.negative.count, color: COLORS.negative },
-      ], { size: 130, stroke: 18 });
+        { value: distribution.positive.count, color: COLORS.positive, label: `${distribution.positive.pct}%` },
+        { value: distribution.neutral.count, color: COLORS.neutral, label: `${distribution.neutral.pct}%`, labelColor: "#3b2f00" },
+        { value: distribution.negative.count, color: COLORS.negative, label: `${distribution.negative.pct}%` },
+      ], { size: 300, stroke: 72 });
 
       document.getElementById("dist-legend").innerHTML = `
         <div class="legend-item">${sentimentEmoji("positive")} Positive<span class="val">${distribution.positive.pct}%</span></div>
@@ -137,15 +137,32 @@
         ${distribution.total === 0 ? '<p class="card-sub" style="margin:8px 0 0;">No comments analyzed yet - run an analysis to see your data here.</p>' : ""}
       `;
 
+      drawSizedCharts(over_time, by_product);
+      // The two charts are drawn at their card's pixel width, so redraw on resize.
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => drawSizedCharts(over_time, by_product), 150);
+      });
+
+      renderWordCloud(document.getElementById("word-cloud"), word_cloud);
+    } catch (err) {
+      showToast("Could not load visualization data.", true);
+    }
+  }
+
+  function drawSizedCharts(over_time, by_product) {
       if (over_time.length) {
         renderLineChart(document.getElementById("time-chart"), {
           labels: over_time.map((d) => d.date.slice(5)),
           series: [
-            { name: "Positive", color: COLORS.positive, values: over_time.map((d) => d.positive) },
-            { name: "Neutral", color: COLORS.neutral, values: over_time.map((d) => d.neutral) },
-            { name: "Negative", color: COLORS.negative, values: over_time.map((d) => d.negative) },
+            // Theme-aware label shades so the % text stays readable on the card.
+            { name: "Positive", color: COLORS.positive, labelColor: cssVar("--green", COLORS.positive), values: over_time.map((d) => d.positive) },
+            { name: "Neutral", color: COLORS.neutral, labelColor: cssVar("--yellow", COLORS.neutral), values: over_time.map((d) => d.neutral) },
+            { name: "Negative", color: COLORS.negative, labelColor: cssVar("--red", COLORS.negative), values: over_time.map((d) => d.negative) },
           ],
-        });
+        // Taller than the default so per-point % labels have room to separate.
+        }, { height: 320, showValues: true });
       } else {
         document.getElementById("time-chart").innerHTML = '<div class="empty-state">Not enough data yet.</div>';
       }
@@ -154,19 +171,14 @@
         renderBarChart(document.getElementById("product-chart"), {
           labels: by_product.map((p) => p.product),
           series: [
-            { name: "Positive", color: COLORS.positive, values: by_product.map((p) => p.positive) },
-            { name: "Neutral", color: COLORS.neutral, values: by_product.map((p) => p.neutral) },
-            { name: "Negative", color: COLORS.negative, values: by_product.map((p) => p.negative) },
+            { name: "Positive", color: COLORS.positive, labelColor: cssVar("--green", COLORS.positive), values: by_product.map((p) => p.positive) },
+            { name: "Neutral", color: COLORS.neutral, labelColor: cssVar("--yellow", COLORS.neutral), values: by_product.map((p) => p.neutral) },
+            { name: "Negative", color: COLORS.negative, labelColor: cssVar("--red", COLORS.negative), values: by_product.map((p) => p.negative) },
           ],
-        });
+        }, { height: 300, showShares: true });
       } else {
         document.getElementById("product-chart").innerHTML = '<div class="empty-state">Not enough data yet.</div>';
       }
-
-      renderWordCloud(document.getElementById("word-cloud"), word_cloud);
-    } catch (err) {
-      showToast("Could not load visualization data.", true);
-    }
   }
 
   init();
