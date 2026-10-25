@@ -111,6 +111,22 @@ backend/venv/bin/python training/evaluate_app.py       # old vs new, through the
   `pip install transformers==4.46.0 sentencepiece scikit-learn pandas openpyxl`,
   then run the two training commands; a T4 GPU trains in a few minutes.
 
+## Off-topic comments
+
+Comments that aren't about the foundation product ("ano color ng hair mo
+mi?", "di ako pinayagan ni papa bumili", reviews of other products like
+lotion, serum, sunscreen, lipstick, mascara or eyeliner, follow/engagement
+spam, laughter, stray emoji) are skipped before classification: they're never labeled,
+saved, or counted in the charts. The Results page lists what was skipped and
+why. The rules live in `backend/relevance.py`;
+`training/evaluate_relevance.py --db` checks them against the labeled
+datasets (all product comments) and known off-topic examples.
+
+Comments stored before the filter existed are removed with
+`backend/venv/bin/python backend/cleanup_irrelevant.py` (`--dry-run` to only
+list them). It backs up `dataset.db` to `backups/` first. Re-run it after
+changing the word lists.
+
 ## Pages
 
 | Page | File | Description |
