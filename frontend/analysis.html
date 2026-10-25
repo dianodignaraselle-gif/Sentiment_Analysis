@@ -65,6 +65,11 @@
         </div>
       </div>
     </div>
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 </nav>
 
@@ -73,7 +78,7 @@
     <div class="page-header">
       <div>
         <h1>Analysis</h1>
-        <p>Input TikTok comments or link to analyze sentiment using BERT Model.</p>
+        <p>Input TikTok comments or link to analyze sentiment.</p>
       </div>
     </div>
 
@@ -103,20 +108,6 @@
             <input type="url" id="tiktok-link" placeholder="https://www.tiktok.com/@user/video/..." />
           </div>
         </div>
-
-        <details class="advanced">
-          <summary>Advanced Options ▾</summary>
-          <div class="advanced-body">
-            <div class="field" style="margin-bottom:0;">
-              <label for="min-length">Minimum comment length</label>
-              <input type="text" id="min-length" placeholder="e.g. 3 characters" disabled />
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <label for="language">Language</label>
-              <input type="text" id="language" value="English, Tagalog &amp; Taglish (auto-detected by BERT)" disabled />
-            </div>
-          </div>
-        </details>
 
         <button class="btn btn-primary" id="analyze-btn">
           <span id="analyze-label">Analyze Sentiment</span>
@@ -149,7 +140,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> 
   </div>
 </main>
 
@@ -188,7 +179,7 @@
       throw new Error("Please paste at least one comment.");
     }
 
-    analyzeLabel.textContent = "Analyzing with XLM-RoBERTa...";
+    analyzeLabel.textContent = "Analyzing...";
     const data = await Api.analyze(lines, product);
     sessionStorage.setItem("lastAnalysis", JSON.stringify({ mode: "paste", ...data }));
     window.location.href = "results.html";
