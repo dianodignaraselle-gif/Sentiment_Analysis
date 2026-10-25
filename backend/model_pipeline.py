@@ -35,6 +35,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
+import relevance
 from preprocessing import MAX_LENGTH, clean_text  # shared with training/train_sentiment.py
 
 BASE_MODEL_NAME = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
@@ -304,7 +305,7 @@ POSITIVE_PHRASES = {
     # praise that contains a complaint word
     "hulas proof", "hulas-proof", "anti hulas", "anti-hulas", "expensive looking", "expensive ang atake",
     "mukhang mamahalin", "hirap tanggalin", "hard to remove", "super stay",
-    "shade match", "perfect match",
+    "shade match", "perfect match", 
     "such a steal", "a steal", "full coverage", "5 stars", "five stars", "five star", "5/5",
     "exceeded my expectations", "worth the hype", "match na match",
     "repurchase", "buy again", "bibili ulit", "oorder ulit", "uulit ako",
@@ -323,7 +324,7 @@ NEGATIVE_PHRASES = {
     "mas okay pa yung", "mas okay yung", "mas ok pa yung", "mas better pa yung", "mas better yung",
     "not worth the hype", "di worth the hype", "hindi worth the hype", "matagal dumating",
     "tagal dumating", "ang tagal dumating", "sumakit ulo", "sumakit ang ulo", "masakit sa ulo",
-    "hindi tumagal", "di tumagal", "hindi bagay", "di bagay", "hindi hiyang", "di hiyang",
+    "hindi tumagal", "di tumagal", "hindi bagay", "di bagay", "hindi hiyang", "di hiyang", "masakit sa ilong",
 }
 _POLAR_PHRASES = sorted(
     [(p, 1) for p in POSITIVE_PHRASES] + [(p, -1) for p in NEGATIVE_PHRASES], key=lambda x: -len(x[0])
@@ -336,7 +337,7 @@ NEUTRAL_PHRASES = {
     "normal lang", "nothing special", "walang special", "no special", "it's okay", "its okay",
     "it's fine", "its fine", "fine lang", "mid lang", "so so", "hindi masama", "di masama",
     "same lang", "parang same", "walang pinagkaiba", "no difference", "depende", "50/50",
-    "hit or miss", "neither",
+    "hit or miss", "neither", "mild lang", "not too bad", "not too good", "not too great", "not too special",
     # not tried yet / still testing
     "di ko pa natry", "hindi ko pa natry", "di ko pa na-try", "hindi ko pa na-try",
     "di ko pa nagagamit", "hindi ko pa nagagamit", "di ko pa nasusubukan", "hindi ko pa nasusubukan",
@@ -634,7 +635,86 @@ def _neutral_overrides(scores: dict, text: str) -> dict:
             return _with_winner(scores, "positive", LEXICON_CLAUSE_CONFIDENCE)
         if top == "positive" and wneg > 0 and wpos == 0:
             return _with_winner(scores, "negative", LEXICON_CLAUSE_CONFIDENCE)
+        if top == "neutral" and wpos > 0 and wneg == 0 and not neu and not _only_questions(text):
+            # "Looks like second skin": short praise the model calls neutral.
+            return _with_winner(scores, "positive", LEXICON_CLAUSE_CONFIDENCE)
     return scores
+
+
+# ---- Compliments on the creator -> neutral -------------------------------
+# "Ganda ng skin mo!!!", "Ang ganda mo ng skin nyo, ang kinis!" praise the
+# creator's own skin/face, not the foundation, so they're neutral. They stay
+# positive when the comment credits the product ("ang ganda ng skin mo kapag
+# gamit mo yang foundation", "nakakakinis siya tingnan", "poreless ka").
+PERSONAL_COMPLIMENT_AS_NEUTRAL = os.getenv("SENTIMENT_PERSONAL_COMPLIMENT_NEUTRAL", "1") == "1"
+_PERSONAL_TARGET_RE = re.compile(
+    r"\b(?:skin|balat|kutis|face|mukha|muka|fes)\s+(?:mo|nyo|niyo|ninyo|ni\s+\w+)\b"
+    r"|\b(?:ganda|gandang|kinis|makinis|pretty|cute|blooming|glowing|glowy)\s+(?:mo|nyo|niyo|ninyo|ka)\b"
+)
+_PRODUCT_CREDIT_RE = re.compile(
+    r"\b(?:foundation|pundasyon|product|produkto|cushion|concealer|primer|powder|makeup|make-up|brand"
+    r"|gamit|ginamit|gumamit|gamitin|ginagamit|gagamitin|suot|nilagay|apply|inapply|applied"
+    r"|using|use|used|wearing|thanks to|because of|dahil sa|nakakakinis|nakakaganda|nakakaglow"
+    r"|poreless|coverage|shade|finish|formula|blend|blends|blendable|tint"
+    r"|siya|sya|niya|nya|ito|it|this)\b"  # "it/siya" = the product: "tumatagal siya sa skin mo"
+)
+PERSONAL_COMPLIMENT_MAX_WORDS = 12  # longer comments are reviews, not a quick compliment
+
+
+# Praise for what the product does to the skin. The model misreads some of
+# these ("nakakakinis" looks like "nakakainis" = annoying), so they decide.
+_PRODUCT_EFFECT_RE = re.compile(r"\b(?:nakakakinis|nakakaganda|nakakaglow|poreless)\b")
+# "Parang si Liza", "kamukha mo si Anne" - the look is compared to a
+# celebrity, which is praise.
+_LOOKALIKE_RE = re.compile(
+    r"^\W*(?:parang|mukhang|kamukha|kahawig)(?:\s+(?:mo|nyo|niyo|niya|nya|ka))?\s+(?:na\s+)?si\s+\w+"
+)
+
+
+def _skin_compliment_label(text: str) -> str | None:
+    """"neutral" for a compliment on the creator's own skin/face, "positive"
+    when the compliment credits the product, else None (no change)."""
+    lowered = _SQUEEZE_RE.sub(r"\1", text.lower())
+    personal = bool(_PERSONAL_TARGET_RE.search(lowered))
+    wpos, wneg = _word_votes(text)
+    if (
+        personal
+        and not _PRODUCT_CREDIT_RE.search(lowered)
+        and wneg == 0
+        and len(_TOKEN_RE.findall(lowered)) <= PERSONAL_COMPLIMENT_MAX_WORDS
+    ):
+        return "neutral"
+    if (personal or _PRODUCT_EFFECT_RE.search(lowered)) and not _is_inquiry(text) and wpos > 0 and wneg == 0:
+        return "positive"
+    if _LOOKALIKE_RE.search(lowered) and wneg == 0 and not _only_questions(text):
+        return "positive"
+    return None
+
+
+def relevance_check(text: str, product: str | None = None) -> tuple[bool, str]:
+    """(is_relevant, reason): whether a comment is about the foundation product.
+
+    See relevance.py; the sentiment lexicon above counts as product opinion.
+    """
+    return relevance.check(
+        text,
+        product,
+        opinion_words=POSITIVE_WORDS | NEGATIVE_WORDS,
+        opinion_phrases=tuple(POSITIVE_PHRASES | NEGATIVE_PHRASES | NEUTRAL_PHRASES),
+        opinion_emoji=_ALL_EMOJI,
+    )
+
+
+def split_relevant(texts: Iterable[str], product: str | None = None) -> tuple[list, list]:
+    """Split comments into (relevant texts, [{"comment", "reason"}] skipped ones)."""
+    kept, skipped = [], []
+    for t in texts:
+        ok, reason = relevance_check(t, product)
+        if ok:
+            kept.append(t)
+        else:
+            skipped.append({"comment": clean_text(t) or t, "reason": reason})
+    return kept, skipped
 
 
 def classify_raw(texts: Iterable[str]) -> list[SentimentResult]:
@@ -681,6 +761,9 @@ def classify_raw(texts: Iterable[str]) -> list[SentimentResult]:
             }
         else:
             scores = _neutral_overrides(scores, text)
+        skin_label = _skin_compliment_label(text) if PERSONAL_COMPLIMENT_AS_NEUTRAL else None
+        if skin_label:
+            scores = _with_winner(scores, skin_label, max(scores[skin_label], LEXICON_CLAUSE_CONFIDENCE))
 
         sentiment = max(scores, key=scores.get)
         results.append(
