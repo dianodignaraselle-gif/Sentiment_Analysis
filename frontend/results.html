@@ -65,6 +65,11 @@
         </div>
       </div>
     </div>
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 </nav>
 
@@ -88,10 +93,19 @@
 
     <div class="live-error" id="live-error" role="alert" hidden></div>
 
+    <div class="card side-card" id="skipped-card" hidden>
+      <details class="advanced" style="margin-bottom:0;">
+        <summary id="skipped-summary">Skipped comments ▾</summary>
+        <div style="padding-top:12px;">
+          <p class="card-sub" style="margin-top:0;">Not about the foundation product, so they weren't classified, saved, or counted in the results and graphs.</p>
+          <ul class="skipped-list" id="skipped-list"></ul>
+        </div>
+      </details>
+    </div>
+
     <div class="card side-card" id="video-overview-card" hidden>
       <h3 style="margin-bottom:12px;">Video Creator Sentiment (Whisper + XLM-RoBERTa)</h3>
       <p class="card-sub" id="video-author"></p>
-      <span class="transcript-note" id="transcript-note" hidden></span>
       <details class="advanced" open>
         <summary>Transcript / Caption ▾</summary>
         <div class="advanced-body" style="display:block;"><p id="video-text" style="white-space:pre-line;"></p></div>
@@ -211,12 +225,31 @@
       .join("");
   }
 
-  document.querySelectorAll("#sample-list").forEach(() => {});
+  let userPickedTab = false;
+
+  function selectTab(sentiment) {
+    document.querySelectorAll('.tabs .tab-btn[data-sentiment]').forEach((b) => {
+      b.classList.toggle("active", b.dataset.sentiment === sentiment);
+    });
+    renderSamples(sentiment);
+  }
+
+  // Open the first tab that actually has comments (e.g. all-neutral results
+  // land on Neutral), unless the user already chose a tab themselves.
+  function showDefaultTab() {
+    const active = document.querySelector('.tabs .tab-btn[data-sentiment].active')?.dataset.sentiment || "positive";
+    if (userPickedTab || currentResults.some((r) => r.sentiment === active)) {
+      selectTab(active);
+      return;
+    }
+    const first = ["positive", "neutral", "negative"].find((s) => currentResults.some((r) => r.sentiment === s));
+    selectTab(first || active);
+  }
+
   document.querySelectorAll('.tabs .tab-btn[data-sentiment]').forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll('.tabs .tab-btn[data-sentiment]').forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      renderSamples(btn.dataset.sentiment);
+      userPickedTab = true;
+      selectTab(btn.dataset.sentiment);
     });
   });
 
@@ -232,6 +265,21 @@
     a.click();
     URL.revokeObjectURL(url);
   });
+
+  function plural(n, word) {
+    return `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
+  }
+
+  // Comments the backend judged off-topic (not about the product).
+  function renderSkipped(skipped) {
+    const card = document.getElementById("skipped-card");
+    card.hidden = !skipped.length;
+    if (!skipped.length) return;
+    document.getElementById("skipped-summary").textContent = `${plural(skipped.length, "comment")} skipped as not about the product ▾`;
+    document.getElementById("skipped-list").innerHTML = skipped
+      .map((s) => `<li>${escapeHtml(s.comment)} <span class="why">(${escapeHtml(s.reason)})</span></li>`)
+      .join("");
+  }
 
   const SENTIMENT_EMOJI = { positive: "😊", neutral: "😐", negative: "😞" };
   let liveJobId = null;
@@ -256,9 +304,6 @@
     }
     document.getElementById("video-text").textContent = textParts.join("\n\n") || "No caption or transcript available.";
 
-    const note = document.getElementById("transcript-note");
-    note.hidden = !video.transcript_note;
-    note.textContent = video.transcript_note ? `⚠️ ${video.transcript_note}` : "";
 
     const row = document.getElementById("video-sentiment-row");
     const sentiment = video.sentiment || "neutral";
@@ -295,9 +340,10 @@
       const data = await Api.pollTikTok(liveJobId);
       currentResults = data.results || [];
       renderSummary(data.summary);
-      renderSamples(document.querySelector('.tabs .tab-btn[data-sentiment].active')?.dataset.sentiment || "positive");
+      showDefaultTab();
       const simNote = commentsSimulated ? " (simulated demo comments)" : "";
-      document.getElementById("results-sub").textContent = `Live TikTok comment feed${simNote} · ${data.summary.total} comments analyzed so far`;
+      const skippedNote = data.skipped_count ? ` · ${plural(data.skipped_count, "off-topic comment")} skipped` : "";
+      document.getElementById("results-sub").textContent = `Live TikTok comment feed${simNote} · ${data.summary.total} comments analyzed so far${skippedNote}`;
 
       const simSuffix = commentsSimulated ? " · ⚠️ simulated comments, not scraped from the real video" : "";
       if (data.comments_error) {
@@ -351,7 +397,7 @@
         commentsSimulated = !!data.comments_simulated;
         renderVideoOverview(data.video || {});
         renderSummary(data.summary);
-        renderSamples("positive");
+        showDefaultTab();
         document.getElementById("results-sub").textContent = commentsSimulated
           ? "Waiting for live comments... (simulated demo comments)"
           : "Waiting for live comments...";
@@ -367,9 +413,12 @@
 
       currentResults = data.results || [];
       renderSummary(data.summary);
-      renderSamples("positive");
-      const productNote = data.summary.product ? ` for "${escapeHtml(data.summary.product)}"` : "";
-      document.getElementById("results-sub").textContent = `Summary of sentiment analysis using BERT Model${productNote} · ${data.summary.total} comments analyzed`;
+      showDefaultTab();
+      const skipped = data.skipped || [];
+      renderSkipped(skipped);
+      const productNote = data.summary.product ? ` for "${data.summary.product}"` : "";
+      const skippedNote = skipped.length ? ` · ${plural(skipped.length, "off-topic comment")} skipped` : "";
+      document.getElementById("results-sub").textContent = `Summary of sentiment analysis using BERT Model${productNote} · ${data.summary.total} comments analyzed${skippedNote}`;
       return;
     }
 
