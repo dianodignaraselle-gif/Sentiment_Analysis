@@ -126,7 +126,9 @@ def analyze():
     if len(comments) > 200:
         return jsonify({"error": "Too many comments in a single request (max 200)."}), 400
 
-    results = model.classify(comments)
+    # Comments that aren't about the product are never classified or stored.
+    comments, skipped = model.split_relevant(comments, product)
+    results = model.classify(comments) if comments else []
 
     database.insert_comments(
         [
@@ -158,7 +160,7 @@ def analyze():
         "negative": {"count": counts["negative"], "pct": pct(counts["negative"])},
     }
 
-    return jsonify({"summary": summary, "results": results})
+    return jsonify({"summary": summary, "results": results, "skipped": skipped})
 
 
 def _summarize(results):
@@ -203,18 +205,13 @@ def tiktok_analyze():
     video_info = source.fetch_video_info(video_url)
 
     # Only trust the transcript if Whisper produced real, non-looping speech;
-    # otherwise classify the caption alone and tell the page why.
+    # otherwise classify the caption alone.
     transcript_ok = bool(video_info.transcript) and not video_info.transcript_issue
     caption = video_info.caption or ""
     if transcript_ok:
         analysis_basis = "caption+transcript" if caption.strip() else "transcript"
-        transcript_note = None
     else:
         analysis_basis = "caption" if caption.strip() else None
-        if video_info.transcript:
-            transcript_note = "Transcript unreliable - caption used" if analysis_basis else "Transcript unreliable - no caption to analyze"
-        else:
-            transcript_note = "No usable transcript - caption used" if analysis_basis else None
     video_text = model.build_video_text(caption, video_info.transcript if transcript_ok else "")
     video_result = model.classify_one(video_text) if video_text else None
 
@@ -244,7 +241,6 @@ def tiktok_analyze():
         "transcript_error": video_info.transcript_error,
         "transcript_issue": video_info.transcript_issue,
         "transcript_reliable": transcript_ok,
-        "transcript_note": transcript_note,
         "analysis_basis": analysis_basis,
         "sentiment": video_result.sentiment if video_result else None,
         "score": video_result.score if video_result else None,
@@ -273,9 +269,12 @@ def tiktok_updates(job_id):
     job["last_polled_at"] = time.time()
     poller = job["poller"]
     new_comments = poller.drain() if poller else []
-    # Whitespace/emoji-only comments are dropped by the classifier, so pair
-    # results back up by text rather than by position.
+    # Whitespace-only comments are dropped by the classifier, and comments
+    # that aren't about the product are skipped (never classified or stored).
     new_comments = [c for c in new_comments if model.clean_text(c.text)]
+    relevant = [c for c in new_comments if model.relevance_check(c.text, job["product"])[0]]
+    job["skipped_count"] = job.get("skipped_count", 0) + len(new_comments) - len(relevant)
+    new_comments = relevant
 
     if new_comments:
         classified = model.classify([c.text for c in new_comments])
@@ -313,6 +312,8 @@ def tiktok_updates(job_id):
             "summary": _summarize(job["comments"]),
             "results": job["comments"],
             "new_count": len(new_comments),
+            # In-memory only: resets if the job is restored after a restart.
+            "skipped_count": job.get("skipped_count", 0),
             "is_running": bool(poller and poller.is_running()),
             "stopped": job["stopped"],
             "last_error": poller.get_last_error() if poller else None,
