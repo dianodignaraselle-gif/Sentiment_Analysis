@@ -16,7 +16,7 @@
   --red: #dc2626;
   --red-bg: #fee2e2;
   --text: #101d2c;
-  --text-muted: #5b6b80;
+  --text-muted: #44546a;
   --border: #dfe6ee;
   --bg-page: #ffffff;
   --card-bg: #ffffff;
@@ -27,6 +27,9 @@
   --radius-sm: 8px;
   --shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+  /* Font sizes referenced by inline styles (e.g. about.html). */
+  --fs-md: 17px;
+  --fs-3xl: 32px;
 }
 
 :root[data-theme="dark"] {
@@ -45,7 +48,7 @@
   --red: #f87171;
   --red-bg: #3a1414;
   --text: #eef3f8;
-  --text-muted: #8a9cb3;
+  --text-muted: #a8b8cc;
   --border: #16283d;
   --bg-page: #050c16;
   --card-bg: #0b1826;
@@ -66,6 +69,15 @@ body {
   color: var(--text);
   line-height: 1.5;
   transition: background-color 0.2s ease, color 0.2s ease;
+  /* Column layout so the main content stretches to fill the viewport
+     height, even on pages with little content. */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > main {
+  flex: 1 0 auto;
 }
 
 a {
@@ -78,10 +90,26 @@ img, svg {
   display: block;
 }
 
+/* Full-width layout: content spans the whole screen, with side padding
+   that scales with the viewport. */
 .container {
-  max-width: 1240px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(16px, 3vw, 56px);
+}
+
+/* The home page stays centered, just wider than the original 1240px. */
+.home-page .container {
+  max-width: 1480px;
+  padding: 0 clamp(24px, 3vw, 48px);
+}
+
+/* Taller hero that still leaves room for the feature cards below it to
+   show on the first screen (~240px: card height plus section padding). */
+.home-page .hero {
+  min-height: max(560px, calc(100vh - 68px - 240px));
+  display: flex;
+  align-items: center;
 }
 
 /* ---------------- Navbar ---------------- */
@@ -108,8 +136,8 @@ img, svg {
 }
 
 .brand-logo {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   background: #000000;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -120,31 +148,42 @@ img, svg {
 }
 
 .brand-logo svg {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
 }
 
 .brand-text .title {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 22px;
   line-height: 1.2;
 }
 
 .brand-text .subtitle {
-  font-size: 11px;
-  color: #a3a1c0;
+  font-size: 14.5px;
+  color: #c4c8dc;
   letter-spacing: 0.02em;
 }
 
 .nav-links {
   display: flex;
-  gap: 32px;
+  gap: 36px;
   align-items: center;
+  /* Nudges the links right of the navbar's center. */
+  margin-left: clamp(40px, 8vw, 160px);
+}
+
+/* Mid-size screens: less spacing so the bigger links don't crowd the buttons. */
+@media (min-width: 901px) and (max-width: 1200px) {
+  .nav-links {
+    gap: 22px;
+    margin-left: 24px;
+    margin-right: 24px;
+  }
 }
 
 .nav-links a {
-  font-size: 14px;
-  color: #c7c5db;
+  font-size: 17px;
+  color: #e2e6f0;
   font-weight: 500;
   padding: 6px 2px;
   border-bottom: 2px solid transparent;
@@ -235,13 +274,13 @@ img, svg {
   border-radius: 50%;
   background: linear-gradient(135deg, var(--tiktok-cyan), var(--teal), var(--tiktok-red));
   color: #06121f;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .profile-name {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   max-width: 120px;
   overflow: hidden;
@@ -293,7 +332,7 @@ img, svg {
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 500;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -332,7 +371,7 @@ img, svg {
   gap: 8px;
   padding: 11px 22px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 15.5px;
   font-weight: 600;
   border: none;
   cursor: pointer;
@@ -388,7 +427,7 @@ img, svg {
 
 .btn-sm {
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .btn svg {
@@ -443,7 +482,7 @@ img, svg {
 }
 
 .hero h1 {
-  font-size: 38px;
+  font-size: 42px;
   line-height: 1.2;
   font-weight: 800;
   margin: 0 0 6px;
@@ -457,15 +496,15 @@ img, svg {
 }
 
 .hero .using-bert {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: #6EC6C4;
   margin: 0 0 16px;
 }
 
 .hero p.lead {
-  color: #a9c0d6;
-  font-size: 15px;
+  color: #c6d6e6;
+  font-size: 16.5px;
   max-width: 520px;
   margin: 0 0 28px;
 }
@@ -562,7 +601,7 @@ img, svg {
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.24);
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: 0.1px;
@@ -572,7 +611,7 @@ img, svg {
 
 .bubble-icon {
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1;
 }
 
@@ -805,12 +844,12 @@ img, svg {
 
 .feature-card h3 {
   margin: 0 0 6px;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .feature-card p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 
@@ -830,14 +869,14 @@ img, svg {
 }
 
 .page-header h1 {
-  font-size: 26px;
+  font-size: 28px;
   margin: 0 0 6px;
 }
 
 .page-header p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 15.5px;
 }
 
 .page-header .actions {
@@ -848,7 +887,7 @@ img, svg {
 }
 
 .live-status {
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -859,24 +898,9 @@ img, svg {
   border-radius: var(--radius-lg);
   padding: 12px 16px;
   margin-bottom: 16px;
-  font-size: 14px;
+  font-size: 15.5px;
   line-height: 1.5;
   overflow-wrap: anywhere;
-}
-
-.transcript-note {
-  display: inline-block;
-  background: var(--red-bg);
-  color: var(--red);
-  border-radius: 999px;
-  padding: 4px 12px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.transcript-note[hidden] {
-  display: none;
 }
 
 /* ---------------- Cards ---------------- */
@@ -889,12 +913,12 @@ img, svg {
 }
 
 .card h2 {
-  font-size: 16px;
+  font-size: 17px;
   margin: 0 0 4px;
 }
 
 .card .card-sub {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-muted);
   margin: 0 0 16px;
 }
@@ -923,7 +947,7 @@ img, svg {
   background: transparent;
   padding: 9px 20px;
   border-radius: 999px;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
@@ -941,7 +965,7 @@ img, svg {
 
 .field label {
   display: block;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   margin-bottom: 8px;
 }
@@ -953,7 +977,7 @@ img, svg {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 12px 14px;
-  font-size: 13.5px;
+  font-size: 15px;
   font-family: inherit;
   resize: vertical;
   background: var(--input-bg);
@@ -969,7 +993,7 @@ img, svg {
 
 .char-count {
   text-align: right;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--text-muted);
   margin-top: 6px;
 }
@@ -982,6 +1006,7 @@ img, svg {
   display: block;
 }
 
+/* Collapsible sections on the Results page (transcript, skipped comments). */
 details.advanced {
   margin-bottom: 20px;
 }
@@ -989,7 +1014,7 @@ details.advanced {
 details.advanced summary {
   cursor: pointer;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--text);
   list-style: none;
 }
@@ -1003,6 +1028,22 @@ details.advanced summary::-webkit-details-marker {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+}
+
+.skipped-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.skipped-list li + li {
+  margin-top: 6px;
+}
+
+.skipped-list .why {
+  font-size: 13.5px;
+  font-style: italic;
 }
 
 .side-card {
@@ -1027,12 +1068,12 @@ details.advanced summary::-webkit-details-marker {
 }
 
 .side-card h3 {
-  font-size: 14.5px;
+  font-size: 16px;
   margin: 0 0 8px;
 }
 
 .side-card p {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-muted);
   margin: 0;
 }
@@ -1050,7 +1091,7 @@ details.advanced summary::-webkit-details-marker {
 }
 
 .label-row .emoji {
-  font-size: 20px;
+  font-size: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1066,11 +1107,11 @@ details.advanced summary::-webkit-details-marker {
 
 .label-row .name {
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .label-row .desc {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
@@ -1104,12 +1145,12 @@ details.advanced summary::-webkit-details-marker {
 }
 
 .donut-center .pct {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
 }
 
 .donut-center .lbl {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
@@ -1128,7 +1169,7 @@ details.advanced summary::-webkit-details-marker {
 }
 
 .stat-card .emoji {
-  font-size: 30px;
+  font-size: 32px;
   margin-bottom: 8px;
   display: inline-flex;
   align-items: center;
@@ -1143,12 +1184,12 @@ details.advanced summary::-webkit-details-marker {
 .stat-card.negative .emoji { background: var(--red); }
 
 .stat-card .pct {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
 }
 
 .stat-card .count {
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--text-muted);
 }
 
@@ -1165,14 +1206,14 @@ details.advanced summary::-webkit-details-marker {
 table.simple-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 table.simple-table th {
   text-align: left;
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13.5px;
   padding: 8px 6px;
   border-bottom: 1px solid var(--border);
 }
@@ -1193,7 +1234,7 @@ table.simple-table tr:last-child td {
   gap: 6px;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1208,7 +1249,7 @@ table.simple-table tr:last-child td {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 13.5px;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -1229,7 +1270,7 @@ table.simple-table tr:last-child td {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  font-size: 13px;
+  font-size: 14.5px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: var(--input-bg);
@@ -1254,7 +1295,7 @@ table.simple-table tr:last-child td {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .legend-dot {
@@ -1271,7 +1312,34 @@ table.simple-table tr:last-child td {
 .donut-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 20px;
+}
+
+/* Visualization page: center the donut + legend in the middle of its card. */
+.viz-grid .card:has(.donut-row) {
+  display: flex;
+  flex-direction: column;
+}
+
+.viz-grid .donut-row {
+  flex: 1;
+  justify-content: center;
+  gap: 40px;
+}
+
+/* Large labelled donut (Visualization page); scales down on narrow cards. */
+.donut-wrap.donut-lg {
+  width: 300px;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+.donut-wrap.donut-lg svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .wordcloud {
@@ -1301,7 +1369,7 @@ table.simple-table tr:last-child td {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 12px;
-  font-size: 13px;
+  font-size: 14.5px;
   background: var(--input-bg);
   color: var(--text);
 }
@@ -1318,7 +1386,7 @@ table.simple-table tr:last-child td {
 table.data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14.5px;
   min-width: 640px;
 }
 
@@ -1327,7 +1395,7 @@ table.data-table th {
   padding: 10px 12px;
   background: var(--input-bg);
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border-bottom: 1px solid var(--border);
@@ -1348,7 +1416,7 @@ table.data-table tr:hover td {
   align-items: center;
   justify-content: space-between;
   margin-top: 18px;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-muted);
   flex-wrap: wrap;
   gap: 12px;
@@ -1367,7 +1435,7 @@ table.data-table tr:hover td {
   background: var(--card-bg);
   color: var(--text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .page-btns button.active {
@@ -1433,13 +1501,13 @@ table.data-table tr:hover td {
 
 .info-box h4 {
   margin: 0 0 10px;
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .info-box ul {
   margin: 0;
   padding-left: 18px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
@@ -1453,7 +1521,7 @@ table.data-table tr:hover td {
   text-align: center;
   padding: 40px 0;
   color: var(--text-muted);
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .toast {
@@ -1464,7 +1532,7 @@ table.data-table tr:hover td {
   color: #fff;
   padding: 12px 18px;
   border-radius: var(--radius-md);
-  font-size: 13.5px;
+  font-size: 15px;
   box-shadow: var(--shadow-lg);
   opacity: 0;
   transform: translateY(10px);
@@ -1525,7 +1593,7 @@ table.data-table tr:hover td {
 }
 
 .modal-message {
-  font-size: 15.5px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text);
   margin: 0 0 22px;
@@ -1551,7 +1619,6 @@ table.data-table tr:hover td {
 /* ---------------- Login page ---------------- */
 
 .login-page {
-  min-height: calc(100vh - 68px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1581,7 +1648,7 @@ table.data-table tr:hover td {
   border: none;
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
   z-index: 2;
@@ -1613,19 +1680,19 @@ table.data-table tr:hover td {
 
 .login-welcome {
   margin: 0 0 4px;
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--text-muted);
 }
 
 .login-form-panel h3 {
   margin: 0 0 10px;
-  font-size: 24px;
+  font-size: 26px;
   letter-spacing: 0.01em;
 }
 
 .login-note {
   margin: 0 0 22px;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-muted);
   line-height: 1.4;
 }
@@ -1651,7 +1718,7 @@ table.data-table tr:hover td {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 16px;
+  font-size: 17px;
   width: 100%;
   font-family: inherit;
   color: var(--text);
@@ -1727,12 +1794,12 @@ table.data-table tr:hover td {
   padding: 14px 28px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 14.5px;
+  font-size: 16px;
 }
 
 .login-signup {
   text-align: center;
-  font-size: 14px;
+  font-size: 15.5px;
   color: var(--text-muted);
   margin: 22px 0 0;
 }
@@ -1846,7 +1913,6 @@ body.door-active .reveal-frame {
   }
 }
 
-@media (max-width: 768px) {
 .hamburger {
   display: none;
   flex-direction: column;
@@ -1864,7 +1930,8 @@ body.door-active .reveal-frame {
   border-radius: 2px;
 }
 
-@media (max-width: 768px) {
+/* Same breakpoint that hides .nav-links above, so the menu is always reachable. */
+@media (max-width: 900px) {
   .nav-links {
     display: none;
     position: absolute;
@@ -1875,6 +1942,7 @@ body.door-active .reveal-frame {
     flex-direction: column;
     padding: 16px 24px;
     gap: 16px;
+    margin-left: 0;
   }
 
   .nav-links.open {
@@ -1884,5 +1952,4 @@ body.door-active .reveal-frame {
   .hamburger {
     display: flex;
   }
-}
 }
