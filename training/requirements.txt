@@ -1,0 +1,11 @@
+# Retraining only (the app itself uses backend/requirements.txt).
+# Locally: python3 -m venv --system-site-packages training/venv, then
+# training/venv/bin/pip install -r training/requirements.txt
+# On torch<2.6 keep numpy<2 (torch 2.2 wheels are built against numpy 1.x).
+torch>=2.2
+transformers>=4.46
+sentencepiece
+numpy<2
+pandas
+scikit-learn
+openpyxl
